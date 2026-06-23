@@ -63,9 +63,13 @@ jobs:
                   break
           ")
 
+          # Substitute ${INFERENCE_API_KEY} before sending spec to DO (doctl does not always expand it).
+          export INFERENCE_API_KEY
+          envsubst '${INFERENCE_API_KEY}' < .do/app.yaml > /tmp/app.yaml
+
           if [ -n "$APP_ID" ]; then
             echo "Updating existing app: $APP_ID"
-            doctl apps update "$APP_ID" --spec .do/app.yaml --wait
+            doctl apps update "$APP_ID" --spec /tmp/app.yaml --wait
             echo "Creating deployment from latest GitHub commit"
             doctl apps create-deployment "$APP_ID" --force-rebuild --wait
           else
@@ -74,7 +78,7 @@ jobs:
               exit 1
             fi
             echo "Creating new app in project: $DO_PROJECT_ID"
-            doctl apps create --spec .do/app.yaml --project-id "$DO_PROJECT_ID" --wait
+            doctl apps create --spec /tmp/app.yaml --project-id "$DO_PROJECT_ID" --wait
           fi
 
       - name: Print app URL
