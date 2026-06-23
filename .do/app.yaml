@@ -33,7 +33,7 @@ services:
       - key: INFERENCE_BASE_URL
         value: https://inference.do-ai.run
       - key: INFERENCE_MODEL
-        value: llama3-8b-instruct
+        value: llama3.3-70b-instruct
       - key: WORKER_POOL_SIZE
         value: "10"
       - key: CHUNK_SIZE

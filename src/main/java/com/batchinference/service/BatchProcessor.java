@@ -139,6 +139,7 @@ public class BatchProcessor {
             String response = backoffExecutor.executeWithRetry(inferenceClient, item);
             jobStore.markItemSuccess(jobId, item.id(), response);
         } catch (InferenceException ex) {
+            log.warn("Inference failed for item {}: {}", item.id(), ex.getMessage());
             try {
                 jobStore.markItemFailed(jobId, item.id(), ex.getMessage());
             } catch (SQLException sqlEx) {

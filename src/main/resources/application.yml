@@ -13,7 +13,7 @@ app:
     provider: ${INFERENCE_PROVIDER:mock}
     base-url: ${INFERENCE_BASE_URL:https://inference.do-ai.run}
     api-key: ${INFERENCE_API_KEY:}
-    model: ${INFERENCE_MODEL:llama3-8b-instruct}
+    model: ${INFERENCE_MODEL:llama3.3-70b-instruct}
     timeout-seconds: ${INFERENCE_TIMEOUT_SECONDS:60}
   spaces:
     enabled: ${SPACES_ENABLED:false}
