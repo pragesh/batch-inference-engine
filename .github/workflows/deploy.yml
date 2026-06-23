@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -22,15 +25,10 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Verify secrets are configured
+      - name: Verify DigitalOcean token is configured
         run: |
           if [ -z "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" ]; then
             echo "::error::Missing GitHub secret DIGITALOCEAN_ACCESS_TOKEN"
-            exit 1
-          fi
-          if [ -z "${{ secrets.DO_PROJECT_ID }}" ]; then
-            echo "::error::Missing GitHub secret DO_PROJECT_ID"
-            echo "Create a DO project, then add its ID (e.g. pragesh-batch-inference project)"
             exit 1
           fi
 
@@ -42,12 +40,40 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
+      - name: Validate app spec
+        run: doctl apps spec validate .do/app.yaml
+
       - name: Deploy to App Platform
         env:
           DO_PROJECT_ID: ${{ secrets.DO_PROJECT_ID }}
         run: |
-          doctl apps create \
-            --spec .do/app.yaml \
-            --project-id "$DO_PROJECT_ID" \
-            --upsert \
-            --wait
+          APP_ID=$(doctl apps list -o json | python3 -c "
+          import json, sys
+          apps = json.load(sys.stdin)
+          for app in apps:
+              if app.get('spec', {}).get('name') == 'batch-inference-engine':
+                  print(app['id'])
+                  break
+          ")
+
+          if [ -n "$APP_ID" ]; then
+            echo "Updating existing app: $APP_ID"
+            doctl apps update "$APP_ID" --spec .do/app.yaml --wait
+          else
+            if [ -z "$DO_PROJECT_ID" ]; then
+              echo "::error::New app requires DO_PROJECT_ID secret"
+              exit 1
+            fi
+            echo "Creating new app in project: $DO_PROJECT_ID"
+            doctl apps create --spec .do/app.yaml --project-id "$DO_PROJECT_ID" --wait
+          fi
+
+      - name: Print app URL
+        run: |
+          APP_ID=$(doctl apps list -o json | python3 -c "
+          import json, sys
+          for app in json.load(sys.stdin):
+              if app.get('spec', {}).get('name') == 'batch-inference-engine':
+                  print(app['id']); break
+          ")
+          doctl apps get "$APP_ID" --format DefaultIngress

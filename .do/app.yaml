@@ -39,16 +39,9 @@ services:
       - key: CHUNK_SIZE
         value: "50"
       - key: DATA_DIR
-        value: /tmp/data
+        value: /app/data
       - key: PORT
         value: "8080"
       - key: INFERENCE_API_KEY
         scope: RUN_TIME
         type: SECRET
-    volumes:
-      - mount_path: /tmp/data
-        name: job-data
-
-volumes:
-  - name: job-data
-    size: 1Gi
