@@ -43,5 +43,6 @@ services:
       - key: PORT
         value: "8080"
       - key: INFERENCE_API_KEY
+        value: ${INFERENCE_API_KEY}
         scope: RUN_TIME
         type: SECRET

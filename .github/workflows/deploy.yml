@@ -25,10 +25,16 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Verify DigitalOcean token is configured
+      - name: Verify secrets are configured
         run: |
           if [ -z "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" ]; then
             echo "::error::Missing GitHub secret DIGITALOCEAN_ACCESS_TOKEN"
+            exit 1
+          fi
+          if [ -z "${{ secrets.INFERENCE_API_KEY }}" ]; then
+            echo "::error::Missing GitHub secret INFERENCE_API_KEY"
+            echo "Add your DigitalOcean Gradient model access key at:"
+            echo "https://github.com/pragesh/batch-inference-engine/settings/secrets/actions"
             exit 1
           fi
 
@@ -46,6 +52,7 @@ jobs:
       - name: Deploy to App Platform
         env:
           DO_PROJECT_ID: ${{ secrets.DO_PROJECT_ID }}
+          INFERENCE_API_KEY: ${{ secrets.INFERENCE_API_KEY }}
         run: |
           APP_ID=$(doctl apps list -o json | python3 -c "
           import json, sys
@@ -59,6 +66,8 @@ jobs:
           if [ -n "$APP_ID" ]; then
             echo "Updating existing app: $APP_ID"
             doctl apps update "$APP_ID" --spec .do/app.yaml --wait
+            echo "Creating deployment from latest GitHub commit"
+            doctl apps create-deployment "$APP_ID" --force-rebuild --wait
           else
             if [ -z "$DO_PROJECT_ID" ]; then
               echo "::error::New app requires DO_PROJECT_ID secret"
