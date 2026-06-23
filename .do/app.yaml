@@ -11,6 +11,10 @@ ingress:
 
 services:
   - name: api
+    github:
+      repo: pragesh/batch-inference-engine
+      branch: main
+      deploy_on_push: false
     dockerfile_path: Dockerfile
     source_dir: /
     http_port: 8080
