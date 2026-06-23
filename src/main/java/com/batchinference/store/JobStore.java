@@ -191,28 +191,69 @@ public class JobStore {
     }
 
     public List<ResultItem> getResults(String jobId) throws SQLException {
+        return queryResults(jobId, null, null, null);
+    }
+
+    /**
+     * Returns item results, optionally filtered by status and paginated.
+     *
+     * @param statusFilter when null, returns only completed items (SUCCESS and FAILED)
+     */
+    public List<ResultItem> queryResults(
+            String jobId,
+            ItemStatus statusFilter,
+            Integer limit,
+            Integer offset
+    ) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+                SELECT item_id, status, prompt, response, error
+                FROM job_items
+                WHERE job_id = ?
+                """);
+        if (statusFilter != null) {
+            sql.append(" AND status = ?");
+        } else {
+            sql.append(" AND status != 'PENDING'");
+        }
+        sql.append(" ORDER BY item_id");
+        if (limit != null) {
+            sql.append(" LIMIT ?");
+        }
+        if (offset != null) {
+            sql.append(" OFFSET ?");
+        }
+
         List<ResultItem> results = new ArrayList<>();
         try (Connection connection = connection();
-             PreparedStatement ps = connection.prepareStatement("""
-                     SELECT item_id, status, prompt, response, error
-                     FROM job_items
-                     WHERE job_id = ?
-                     ORDER BY item_id
-                     """)) {
-            ps.setString(1, jobId);
+             PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+            int param = 1;
+            ps.setString(param++, jobId);
+            if (statusFilter != null) {
+                ps.setString(param++, statusFilter.name());
+            }
+            if (limit != null) {
+                ps.setInt(param++, limit);
+            }
+            if (offset != null) {
+                ps.setInt(param, offset);
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    results.add(new ResultItem(
-                            rs.getString("item_id"),
-                            ItemStatus.valueOf(rs.getString("status")),
-                            rs.getString("prompt"),
-                            rs.getString("response"),
-                            rs.getString("error")
-                    ));
+                    results.add(toResultItem(rs));
                 }
             }
         }
         return results;
+    }
+
+    private ResultItem toResultItem(ResultSet rs) throws SQLException {
+        return new ResultItem(
+                rs.getString("item_id"),
+                ItemStatus.valueOf(rs.getString("status")),
+                rs.getString("prompt"),
+                rs.getString("response"),
+                rs.getString("error")
+        );
     }
 
     public Optional<String> getWebhookUrl(String jobId) throws SQLException {

@@ -5,6 +5,7 @@ import com.batchinference.dto.CreateJobRequest;
 import com.batchinference.dto.CreateJobResponse;
 import com.batchinference.dto.JobStatusResponse;
 import com.batchinference.dto.ResultItem;
+import com.batchinference.model.ItemStatus;
 import com.batchinference.model.JobStatus;
 import com.batchinference.store.JobStore;
 import org.springframework.http.HttpStatus;
@@ -67,6 +68,19 @@ public class JobService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found"));
         } catch (SQLException ex) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read job status", ex);
+        }
+    }
+
+    /**
+     * Returns completed item results while a job is still running (partial snapshot)
+     * or after it finishes. Pending items are excluded unless {@code status} is set.
+     */
+    public List<ResultItem> getResults(String jobId, ItemStatus status, Integer limit, Integer offset) {
+        getStatus(jobId);
+        try {
+            return jobStore.queryResults(jobId, status, limit, offset);
+        } catch (SQLException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to read job results", ex);
         }
     }
 

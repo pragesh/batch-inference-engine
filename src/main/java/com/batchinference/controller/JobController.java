@@ -5,6 +5,7 @@ import com.batchinference.dto.CreateJobResponse;
 import com.batchinference.dto.JobStatusResponse;
 import com.batchinference.dto.ResultItem;
 import com.batchinference.dto.WebhookRegistrationRequest;
+import com.batchinference.model.ItemStatus;
 import com.batchinference.service.JobService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -49,7 +51,21 @@ public class JobController {
         return jobService.getStatus(jobId);
     }
 
-    /** Returns the compiled array of per-row inference results. */
+    /**
+     * Returns completed item results at any time — including while the job is still running.
+     * Use this for partial snapshots (e.g. 68 of 1000 succeeded so far).
+     */
+    @GetMapping("/{jobId}/results")
+    public List<ResultItem> results(
+            @PathVariable String jobId,
+            @RequestParam(required = false) ItemStatus status,
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(required = false) Integer offset
+    ) {
+        return jobService.getResults(jobId, status, limit, offset);
+    }
+
+    /** Returns the full result array once the job has finished (HTTP 409 while running). */
     @GetMapping("/{jobId}/download")
     public List<ResultItem> download(@PathVariable String jobId) {
         return jobService.downloadResults(jobId);
