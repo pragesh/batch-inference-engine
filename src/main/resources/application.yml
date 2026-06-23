@@ -1,0 +1,29 @@
+server:
+  port: ${PORT:8080}
+
+app:
+  data-dir: ${DATA_DIR:./data}
+  default-batch-file: ${DEFAULT_BATCH_FILE:sample_batch.json}
+  worker-pool-size: ${WORKER_POOL_SIZE:10}
+  chunk-size: ${CHUNK_SIZE:50}
+  max-retries: ${MAX_RETRIES:5}
+  initial-backoff-ms: ${INITIAL_BACKOFF_MS:500}
+  max-backoff-ms: ${MAX_BACKOFF_MS:30000}
+  inference:
+    provider: ${INFERENCE_PROVIDER:mock}
+    base-url: ${INFERENCE_BASE_URL:https://inference.do-ai.run}
+    api-key: ${INFERENCE_API_KEY:}
+    model: ${INFERENCE_MODEL:llama3-8b-instruct}
+    timeout-seconds: ${INFERENCE_TIMEOUT_SECONDS:60}
+  spaces:
+    enabled: ${SPACES_ENABLED:false}
+    endpoint: ${SPACES_ENDPOINT:}
+    region: ${SPACES_REGION:nyc3}
+    bucket: ${SPACES_BUCKET:}
+    access-key: ${SPACES_ACCESS_KEY:}
+    secret-key: ${SPACES_SECRET_KEY:}
+    checkpoint-interval: ${SPACES_CHECKPOINT_INTERVAL:100}
+
+spring:
+  application:
+    name: batch-inference-engine

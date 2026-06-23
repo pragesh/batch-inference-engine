@@ -1,0 +1,50 @@
+name: batch-inference-engine
+region: nyc
+
+ingress:
+  rules:
+    - component:
+        name: api
+      match:
+        path:
+          prefix: /
+
+services:
+  - name: api
+    dockerfile_path: Dockerfile
+    source_dir: /
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: INFERENCE_PROVIDER
+        value: digitalocean
+      - key: INFERENCE_BASE_URL
+        value: https://inference.do-ai.run
+      - key: INFERENCE_MODEL
+        value: llama3-8b-instruct
+      - key: WORKER_POOL_SIZE
+        value: "10"
+      - key: CHUNK_SIZE
+        value: "50"
+      - key: DATA_DIR
+        value: /tmp/data
+      - key: PORT
+        value: "8080"
+      - key: INFERENCE_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+    volumes:
+      - mount_path: /tmp/data
+        name: job-data
+
+volumes:
+  - name: job-data
+    size: 1Gi

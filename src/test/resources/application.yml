@@ -1,0 +1,6 @@
+app:
+  data-dir: ${java.io.tmpdir}/batch-inference-test
+  worker-pool-size: 4
+  chunk-size: 10
+  inference:
+    provider: mock
