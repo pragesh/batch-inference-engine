@@ -155,11 +155,16 @@ Repository: [github.com/pragesh/batch-inference-engine](https://github.com/prage
 | `ci.yml` | Push / PR | Runs `mvn verify` |
 | `deploy.yml` | Push to `main` | Tests, then deploys to DO App Platform |
 
-**Required GitHub secret** (Settings → Secrets and variables → Actions):
+**Required GitHub secrets** (Settings → Secrets and variables → Actions):
 
 | Secret | Description |
 |--------|-------------|
 | `DIGITALOCEAN_ACCESS_TOKEN` | DO API token with read/write access |
+| `DO_PROJECT_ID` | Your DO **project** ID (not the app ID). Example: `68944e98-0274-4602-8379-c68a5541b37d` for project `pragesh-batch-inference` |
+
+Find project ID: `doctl projects list --format ID,Name`
+
+> **Note:** Apps deploy into a DO *project* (folder). Without `DO_PROJECT_ID`, apps land in the team default project. Set this secret to keep your app under your own project.
 
 **Required App Platform secret** (set in DO console or via app spec):
 

@@ -22,11 +22,32 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - name: Verify secrets are configured
+        run: |
+          if [ -z "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" ]; then
+            echo "::error::Missing GitHub secret DIGITALOCEAN_ACCESS_TOKEN"
+            exit 1
+          fi
+          if [ -z "${{ secrets.DO_PROJECT_ID }}" ]; then
+            echo "::error::Missing GitHub secret DO_PROJECT_ID"
+            echo "Create a DO project, then add its ID (e.g. pragesh-batch-inference project)"
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy to App Platform
-        uses: digitalocean/app_action/deploy@v2
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          app_spec_location: .do/app.yaml
+
+      - name: Deploy to App Platform
+        env:
+          DO_PROJECT_ID: ${{ secrets.DO_PROJECT_ID }}
+        run: |
+          doctl apps create \
+            --spec .do/app.yaml \
+            --project-id "$DO_PROJECT_ID" \
+            --upsert \
+            --wait
